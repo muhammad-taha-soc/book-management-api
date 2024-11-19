@@ -17,14 +17,18 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 
-@ApiTags('Books')
+@ApiTags('Books') // Tag for the Swagger UI
 @Controller('books')
 export class BooksController {
   constructor(private readonly booksService: BooksService) {}
 
   @Get()
   @ApiOperation({ summary: 'Retrieve all books' })
-  @ApiResponse({ status: 200, description: 'List of books' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all books',
+    type: [CreateBookDto],
+  })
   findAll() {
     return this.booksService.findAll();
   }
@@ -32,7 +36,11 @@ export class BooksController {
   @Get(':id')
   @ApiOperation({ summary: 'Retrieve a book by ID' })
   @ApiParam({ name: 'id', type: String, description: 'The book ID' })
-  @ApiResponse({ status: 200, description: 'The book details' })
+  @ApiResponse({
+    status: 200,
+    description: 'The details of the requested book',
+    type: CreateBookDto,
+  })
   @ApiResponse({ status: 404, description: 'Book not found' })
   findOne(@Param('id') id: string) {
     return this.booksService.findOne(id);
@@ -41,7 +49,11 @@ export class BooksController {
   @Post()
   @ApiOperation({ summary: 'Add a new book' })
   @ApiBody({ type: CreateBookDto })
-  @ApiResponse({ status: 201, description: 'Book added successfully' })
+  @ApiResponse({
+    status: 201,
+    description: 'Book created successfully',
+    type: CreateBookDto,
+  })
   create(@Body() createBookDto: CreateBookDto) {
     return this.booksService.create(createBookDto);
   }
@@ -50,7 +62,11 @@ export class BooksController {
   @ApiOperation({ summary: 'Update a book by ID' })
   @ApiParam({ name: 'id', type: String, description: 'The book ID' })
   @ApiBody({ type: UpdateBookDto })
-  @ApiResponse({ status: 200, description: 'Book updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Book updated successfully',
+    type: UpdateBookDto,
+  })
   @ApiResponse({ status: 404, description: 'Book not found' })
   update(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto) {
     return this.booksService.update(id, updateBookDto);
