@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsInt, IsISBN } from 'class-validator';
+import { IsString, IsInt, IsISBN, IsNotEmpty } from 'class-validator';
 
 export class CreateBookDto {
   @ApiProperty({
@@ -7,6 +7,7 @@ export class CreateBookDto {
     example: 'The Great Gatsby',
   })
   @IsString()
+  @IsNotEmpty()
   title: string;
 
   @ApiProperty({
@@ -14,6 +15,7 @@ export class CreateBookDto {
     example: 'F. Scott Fitzgerald',
   })
   @IsString()
+  @IsNotEmpty()
   author: string;
 
   @ApiProperty({
@@ -30,6 +32,7 @@ export class UpdateBookDto {
     example: 'The Great Gatsby Revised',
   })
   @IsString()
+  @IsNotEmpty()
   title: string;
 
   @ApiProperty({
@@ -37,6 +40,7 @@ export class UpdateBookDto {
     example: 'F. Scott Fitzgerald Revised',
   })
   @IsString()
+  @IsNotEmpty()
   author: string;
 
   @ApiProperty({
