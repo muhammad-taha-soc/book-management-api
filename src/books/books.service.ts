@@ -4,15 +4,20 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { CreateBookDto, UpdateBookDto } from './dto/book.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Book } from './entities/book.entity'; // Import the Book entity
+import { CreateBookDto, UpdateBookDto } from './dto/book.dto'; // Assuming you have DTOs for validation
 
 @Injectable()
 export class BooksService {
-  private books = [];
+  constructor(
+    @InjectRepository(Book)
+    private booksRepository: Repository<Book>, // Inject the repository for Book
+  ) {}
 
-  create(createBookDto: CreateBookDto) {
+  async create(createBookDto: CreateBookDto): Promise<Book> {
     try {
-      // Validate the incoming data (example check)
       if (
         !createBookDto.title ||
         !createBookDto.author ||
@@ -21,13 +26,12 @@ export class BooksService {
         throw new BadRequestException('Title, Author, and ISBN are required');
       }
 
-      // Create a new book and add to the array (simulating DB save)
-      const book = { id: Date.now().toString(), ...createBookDto };
-      this.books.push(book);
-      return book;
+      // Create a new book entity and save it to the database
+      const book = this.booksRepository.create(createBookDto);
+      return await this.booksRepository.save(book);
     } catch (error) {
       if (error instanceof BadRequestException) {
-        throw error; // Re-throw BadRequestException for validation errors
+        throw error;
       }
       throw new InternalServerErrorException(
         'Error occurred while creating the book',
@@ -35,10 +39,9 @@ export class BooksService {
     }
   }
 
-  findAll() {
+  async findAll(): Promise<Book[]> {
     try {
-      // Return the list of books (simulating DB fetch)
-      return this.books;
+      return await this.booksRepository.find();
     } catch (error) {
       throw new InternalServerErrorException(
         'Error occurred while retrieving books',
@@ -46,16 +49,17 @@ export class BooksService {
     }
   }
 
-  findOne(id: string) {
+  async findOne(id: string): Promise<Book> {
     try {
-      const book = this.books.find((book) => book.id === id);
+      // Use the correct syntax for `findOne` method with `where` object
+      const book = await this.booksRepository.findOne({ where: { id } });
       if (!book) {
         throw new NotFoundException(`Book with id ${id} not found`);
       }
       return book;
     } catch (error) {
       if (error instanceof NotFoundException) {
-        throw error; // Re-throw NotFoundException if book is not found
+        throw error;
       }
       throw new InternalServerErrorException(
         'Error occurred while retrieving the book',
@@ -63,27 +67,19 @@ export class BooksService {
     }
   }
 
-  update(id: string, updateBookDto: UpdateBookDto) {
+  async update(id: string, updateBookDto: UpdateBookDto): Promise<Book> {
     try {
-      const index = this.books.findIndex((book) => book.id === id);
-      if (index === -1) {
+      // Use `findOne` with `where` clause
+      const book = await this.booksRepository.findOne({ where: { id } });
+      if (!book) {
         throw new NotFoundException(`Book with id ${id} not found`);
       }
 
-      // Validate the incoming data (example check)
-      if (updateBookDto.title && !updateBookDto.author) {
-        throw new BadRequestException('Both title and author are required');
-      }
-
-      // Update the book data
-      this.books[index] = { ...this.books[index], ...updateBookDto };
-      return this.books[index];
+      Object.assign(book, updateBookDto); // Merge the updated fields
+      return await this.booksRepository.save(book);
     } catch (error) {
       if (error instanceof NotFoundException) {
-        throw error; // Re-throw NotFoundException if book not found
-      }
-      if (error instanceof BadRequestException) {
-        throw error; // Re-throw BadRequestException for validation issues
+        throw error;
       }
       throw new InternalServerErrorException(
         'Error occurred while updating the book',
@@ -91,17 +87,18 @@ export class BooksService {
     }
   }
 
-  remove(id: string) {
+  async remove(id: string): Promise<void> {
     try {
-      const index = this.books.findIndex((book) => book.id === id);
-      if (index === -1) {
+      // Use `findOne` with `where` clause
+      const book = await this.booksRepository.findOne({ where: { id } });
+      if (!book) {
         throw new NotFoundException(`Book with id ${id} not found`);
       }
-      this.books.splice(index, 1); // Remove the book
-      return { message: 'Book successfully deleted' };
+
+      await this.booksRepository.remove(book);
     } catch (error) {
       if (error instanceof NotFoundException) {
-        throw error; // Re-throw NotFoundException if book not found
+        throw error;
       }
       throw new InternalServerErrorException(
         'Error occurred while deleting the book',
